@@ -6,9 +6,12 @@ import redis
 import time
 import json
 
-from model import ClassifyOddEven
-from config import CONFIG
+
+from config.config import CONFIG
 from threading import Timer
+
+"""Custom Model class"""
+from model.model import ClassifyOddEven
 
 
 class Batcher:
@@ -22,7 +25,7 @@ class Batcher:
 
     def run(self):
         while True:
-            """Pull data from hot redis queue"""
+            """Pull data from redis queue"""
             queue = []
             for _ in range(CONFIG.BATCH_SIZE):
                 val = self.redisdb.rpop(CONFIG.IMAGE_QUEUE_ID)

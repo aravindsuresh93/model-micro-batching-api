@@ -6,14 +6,14 @@ once results are available they are sent back to client
 """
 
 from pydantic import BaseModel
-from typing import Optional
 from fastapi import FastAPI
+from typing import Optional
 import redis
 import uuid
 import json
 import time
 
-from config import CONFIG
+from config.config import CONFIG
 
 app = FastAPI()
 redisdb = redis.StrictRedis(host=CONFIG.REDIS_IP, port=CONFIG.REDIS_PORT, db=CONFIG.REDIS_DB_ID)
@@ -28,9 +28,10 @@ class Item(BaseModel):
 def predict(item: Item):
     number = item.number
     uid = str(uuid.uuid1())
-    print(uid)
     redisdb.setex(f"{uid}_data", CONFIG.CLIENT_KEY_EXPIRY, number)
+
     time.sleep(0.5) #Image Decode Delay
+
     redisdb.rpush(CONFIG.IMAGE_QUEUE_ID, uid)
 
     ret = {}
@@ -44,3 +45,6 @@ def predict(item: Item):
 
     ret["es"] = 0
     return ret
+
+
+# run => uvicorn api:app

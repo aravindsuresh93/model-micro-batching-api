@@ -20,31 +20,33 @@ redisdb = redis.StrictRedis(host=CONFIG.REDIS_IP, port=CONFIG.REDIS_PORT, db=CON
 
 
 class Item(BaseModel):
-    name: Optional[str] = None
     number: float
 
 
 @app.post("/predict")
 def predict(item: Item):
+    # Get data
     number = item.number
-    uid = str(uuid.uuid1())
+
+    # Add code to validate input data here
+    # Mimicing data Decode Delay (in case of images)
+    time.sleep(0.5) 
+
+    # Generate UUID | Push UUID to queue | Set data with key <uuid>_data with expriry
+    uid = str(uuid.uuid4().hex)
     redisdb.setex(f"{uid}_data", CONFIG.CLIENT_KEY_EXPIRY, number)
-
-    time.sleep(0.5) #Image Decode Delay
-
     redisdb.rpush(CONFIG.IMAGE_QUEUE_ID, uid)
 
+    # while loop to get 
     ret = {}
     while True:
         output = redisdb.get(f"{uid}_pred")
         if output:
             ret["predictions"] = json.loads(output)["predictions"]
-            redisdb.delete(f"{uid}_pred")
             break
         time.sleep(CONFIG.CLIENT_SLEEP)
 
-    ret["es"] = 0
     return ret
 
 
-# run => uvicorn api:app
+# Command : `uvicorn api:app`
